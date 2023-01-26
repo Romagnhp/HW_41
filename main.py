@@ -26,9 +26,22 @@ ParentClass.metadata.create_all(myEngine)
 
 myRequest = requests.get('http://cnr2.kent.edu/~manley/physicists.html')
 
-myParser = bs4.BeautifulSoup(myRequest.text, 'html.parser')
+myParser = bs4.BeautifulSoup(myRequest.text, 'lxml')
+
+data = []
+rows = myParser.select("tr")
+for row in rows:
+    cells = row.select("td")
+    # temp = cells[0].select("a").text
+    if len(cells) == 3:
+        name = cells[0].text.replace("\n", "").strip()
+        year = cells[1].text.replace("\n", "").strip()
+        desc = cells[2].text.replace("\n", "").strip()
+        data.append((name, year, desc))
+
 
 serch = myParser.table
+
 parsingList = serch.find_all(string=True)
 
 editParsingList = [ i for i in parsingList if not '\n' in i]
@@ -40,12 +53,15 @@ print(editParsingList)
 
 with Session(myEngine) as db:
 
-    for i in range(0, len(editParsingList),3):
-    
+    # for i in range(0, len(editParsingList),3):
+    for el in data:
         row_n = MyColunms(
-                    name = editParsingList[i],
-                    years = editParsingList[i+1], 
-                    major_achievements = editParsingList[i+2] 
+                    # name = editParsingList[i],
+                    # years = editParsingList[i+1], 
+                    # major_achievements = editParsingList[i+2] 
+                    name = el[0],
+                    years = el[1], 
+                    major_achievements = el[2] 
                 )
         # добавление строки со значениями в таблицу БД
         db.add(row_n) 
